@@ -89,6 +89,7 @@ FFMPEG_IUSE_MAP=(
 	lzma
 	modplug:libmodplug
 	nvenc:cuvid,ffnvcodec,nvdec,nvenc
+	opencolorio:^libopencolorio # no multilib
 	ocr:libtesseract
 	openal
 	opencl
@@ -103,6 +104,7 @@ FFMPEG_IUSE_MAP=(
 	quirc:libquirc
 	rabbitmq:^librabbitmq # no multilib
 	rav1e:^librav1e # no multilib
+	rist:^librist # no multilib
 	rubberband:librubberband
 	samba:libsmbclient@v3 # GPL-3+ only
 	sdl:sdl2
@@ -240,6 +242,7 @@ COMMON_DEPEND="
 	)
 	lzma? ( app-arch/xz-utils[${MULTILIB_USEDEP}] )
 	modplug? ( media-libs/libmodplug[${MULTILIB_USEDEP}] )
+	opencolorio? ( media-libs/opencolorio:= )
 	ocr? ( app-text/tesseract:=[${MULTILIB_USEDEP}] )
 	openal? ( media-libs/openal[${MULTILIB_USEDEP}] )
 	opencl? ( virtual/opencl[${MULTILIB_USEDEP}] )
@@ -254,6 +257,7 @@ COMMON_DEPEND="
 	quirc? ( media-libs/quirc:=[${MULTILIB_USEDEP}] )
 	rabbitmq? ( net-libs/rabbitmq-c:= )
 	rav1e? ( >=media-video/rav1e-0.5:=[capi] )
+	rist? ( net-libs/librist )
 	rubberband? ( media-libs/rubberband:=[${MULTILIB_USEDEP}] )
 	samba? ( net-fs/samba:=[client,${MULTILIB_USEDEP}] )
 	sdl? (
@@ -480,7 +484,6 @@ multilib_src_configure() {
 		--disable-libmfx # prefer libvpl for USE=qsv
 		--disable-libnpp # deprecated and not supported for cuda 13.0+
 		--disable-libopencv # leaving for later due to circular opencv[ffmpeg]
-		--disable-librist # librist itself needs attention first (bug #822012)
 		--disable-libtensorflow # causes headaches, and is gone
 		--disable-libtorch # support may need special attention (bug #936127)
 		--disable-mbedtls # messy with slots, tests underlinking issues
@@ -523,6 +526,10 @@ multilib_src_configure() {
 			*mingw32*) conf+=( --target-os=mingw32 );;
 			*linux*) conf+=( --target-os=linux );;
 		esac
+	elif use arm; then
+		# TODO?: could *always* pass tc-arch-kernel, albeit that function
+		# is meant for the kernel and just mostly matches by accident
+		conf+=( --arch=arm ) #969514
 	fi
 
 	# skipping tests is handled at configure-time

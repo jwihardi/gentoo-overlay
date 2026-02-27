@@ -7,7 +7,7 @@ MODULES_OPTIONAL_IUSE=+modules
 inherit desktop dot-a eapi9-pipestatus flag-o-matic linux-mod-r1
 inherit readme.gentoo-r1 systemd toolchain-funcs unpacker user-info
 
-MODULES_KERNEL_MAX=6.18
+MODULES_KERNEL_MAX=6.19
 NV_URI="https://download.nvidia.com/XFree86/"
 
 DESCRIPTION="NVIDIA Accelerated Graphics Driver"
@@ -27,7 +27,7 @@ LICENSE="
 	curl openssl public-domain
 "
 SLOT="0/${PV%%.*}"
-KEYWORDS="-* ~amd64 ~arm64"
+KEYWORDS="-* amd64 ~arm64"
 IUSE="+X abi_x86_32 abi_x86_64 kernel-open persistenced powerd +static-libs +tools wayland"
 
 COMMON_DEPEND="
@@ -63,10 +63,7 @@ RDEPEND="
 	powerd? ( sys-apps/dbus[abi_x86_32(-)?] )
 	wayland? (
 		>=gui-libs/egl-gbm-1.1.1-r2[abi_x86_32(-)?]
-		|| (
-			>=gui-libs/egl-wayland-1.1.13.1[abi_x86_32(-)?]
-			gui-libs/egl-wayland2[abi_x86_32(-)?]
-		)
+		>=gui-libs/egl-wayland-1.1.13.1[abi_x86_32(-)?]
 		X? ( gui-libs/egl-x11[abi_x86_32(-)?] )
 	)
 "
@@ -99,6 +96,7 @@ QA_PREBUILT="lib/firmware/* usr/bin/* usr/lib*"
 PATCHES=(
 	"${FILESDIR}"/nvidia-modprobe-390.141-uvm-perms.patch
 	"${FILESDIR}"/nvidia-settings-530.30.02-desktop.patch
+	"${FILESDIR}"/nvidia-kernel-module-source-${PV}-kernel6.19.patch
 )
 
 pkg_setup() {
@@ -115,6 +113,8 @@ pkg_setup() {
 		~SYSVIPC
 		~!LOCKDEP
 		~!PREEMPT_RT
+		~!RANDSTRUCT_FULL
+		~!RANDSTRUCT_PERFORMANCE
 		~!SLUB_DEBUG_ON
 		!DEBUG_MUTEXES
 		$(usev powerd '~CPU_FREQ')
@@ -148,6 +148,13 @@ pkg_setup() {
 	will fail to build unless the env var IGNORE_PREEMPT_RT_PRESENCE=1 is
 	set. Please do not report issues if run into e.g. kernel panics while
 	ignoring this."
+	local randstruct_msg="is set but NVIDIA may be unstable with
+	it such as causing a kernel panic on shutdown, it is recommended to
+	disable with CONFIG_RANDSTRUCT_NONE=y (https://bugs.gentoo.org/969413
+	-- please report if this appears fixed on NVIDIA's side so can remove
+	this warning)."
+	local ERROR_RANDSTRUCT_FULL="CONFIG_RANDSTRUCT_FULL: ${randstruct_msg}"
+	local ERROR_RANDSTRUCT_PERFORMANCE="CONFIG_RANDSTRUCT_PERFORMANCE: ${randstruct_msg}"
 
 	linux-mod-r1_pkg_setup
 }
@@ -189,6 +196,14 @@ src_compile() {
 	local xnvflags=-fPIC #840389
 	tc-is-lto && xnvflags+=" $(test-flags-CC -ffat-lto-objects)"
 
+	# Same as uname -m.
+	local target_arch
+	case ${ARCH} in
+		amd64) target_arch=x86_64 ;;
+		arm64) target_arch=aarch64 ;;
+		*) die "Unrecognised architecture: ${ARCH}" ;;
+	esac
+
 	NV_ARGS=(
 		PREFIX="${EPREFIX}"/usr
 		HOST_CC="$(tc-getBUILD_CC)"
@@ -196,6 +211,7 @@ src_compile() {
 		BUILD_GTK2LIB=
 		NV_USE_BUNDLED_LIBJANSSON=0
 		NV_VERBOSE=1 DO_STRIP= MANPAGE_GZIP= OUTPUTDIR=out
+		TARGET_ARCH="${target_arch}"
 		WAYLAND_AVAILABLE=$(usex wayland 1 0)
 		XNVCTRL_CFLAGS="${xnvflags}"
 	)
@@ -220,6 +236,7 @@ src_compile() {
 		local modargs=(
 			IGNORE_CC_MISMATCH=yes NV_VERBOSE=1
 			SYSOUT="${KV_OUT_DIR}" SYSSRC="${KV_DIR}"
+			TARGET_ARCH="${target_arch}"
 
 			# kernel takes "x86" and "x86_64" as meaning the same, but nvidia
 			# makes the distinction (since 550.135) and is not happy with "x86"

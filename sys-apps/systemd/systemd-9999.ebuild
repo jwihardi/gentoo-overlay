@@ -131,6 +131,7 @@ RDEPEND="${COMMON_DEPEND}
 	>=acct-user/systemd-resolve-0-r1
 	>=acct-user/systemd-timesync-0-r1
 	>=sys-apps/baselayout-2.2
+	elibc_musl? ( >=sys-libs/musl-1.2.5-r8 )
 	ukify? (
 		${PYTHON_DEPS}
 		$(python_gen_cond_dep "${PEFILE_DEPEND}")
@@ -306,6 +307,7 @@ multilib_src_configure() {
 		-Dmode=release
 		-Dsupport-url="${BRANDING_OS_SUPPORT_URL}"
 		-Dpamlibdir="$(getpam_mod_dir)"
+		-Dlibc=$(usex elibc_musl musl glibc)
 		# avoid bash-completion dep
 		-Dbashcompletiondir="$(get_bashcompdir)"
 		-Dzshcompletiondir="$(get_zshcompdir)"
@@ -342,7 +344,6 @@ multilib_src_configure() {
 		$(meson_native_use_feature kmod)
 		$(meson_feature lz4)
 		$(meson_feature lzma xz)
-		$(meson_use test tests)
 		$(meson_feature zstd)
 		$(meson_native_use_feature iptables libiptc)
 		$(meson_native_use_feature openssl)
@@ -385,6 +386,13 @@ multilib_src_configure() {
 		$(meson_native_true tmpfiles)
 		$(meson_native_true vconsole)
 	)
+
+	# workaround for bug 969103
+	if [[ ${CHOST} == riscv32* ]] ; then
+		myconf+=( -Dtests=true )
+	else
+		myconf+=( $(meson_use test tests) )
+	fi
 
 	case $(tc-arch) in
 		amd64|arm|arm64|loong|ppc|ppc64|riscv|s390|x86)

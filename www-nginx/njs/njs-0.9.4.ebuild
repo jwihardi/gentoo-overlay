@@ -36,10 +36,11 @@ DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
 PATCHES=(
-	# Note: drop on the next upgrade, has been merged upstream as PR 989.
+	# Note: drop on the next upgrade: the patches have been merged upstream as
+	# PR 989, 993 and 1016 respectively.
 	"${FILESDIR}/${PN}-0.9.4-support-quickjs-ng.patch"
-
 	"${FILESDIR}/${PN}-0.9.4-do-not-add-opt-debug-cflags.patch"
+	"${FILESDIR}/${PN}-0.9.4-use-command-v-not-which.patch"
 )
 
 src_configure() {
@@ -65,13 +66,11 @@ src_configure() {
 		myargs+=( "${nocliargs[@]}" )
 	fi
 
-	pushd "${NGINX_MOD_S}" >/dev/null || die "pushd failed"
 	edo ./configure "${myargs[@]}"
-	popd >/dev/null || die "popd failed"
 
 	## The NGINX module part.
 	# Build the stream module unconditionally.
-	sed -i "s/\\\$STREAM/YES/" "${NGINX_MOD_S}/${NGINX_MOD_CONFIG_DIR}/config" ||
+	sed -i "s/\\\$STREAM/YES/" nginx/config ||
 		die "sed failed"
 
 	# Export PKG_CONFIG for pkg-config-based QuickJS-NG detection.
@@ -100,16 +99,16 @@ src_configure() {
 src_compile() {
 	# Build the core first.
 	if use tools; then
-		emake -C "${NGINX_MOD_S}"
+		emake
 	else
-		emake -C "${NGINX_MOD_S}" libnjs libqjs
+		emake libnjs libqjs
 	fi
 
 	nginx-module_src_compile
 }
 
 src_install() {
-	use tools && dobin "${NGINX_MOD_S}"/build/njs
+	use tools && dobin build/njs
 
 	nginx-module_src_install
 }

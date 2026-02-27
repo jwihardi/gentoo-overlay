@@ -23,7 +23,7 @@ S="${WORKDIR}/${MY_P}"
 
 LICENSE="Apache-2.0 SSPL-1"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 -riscv"
+KEYWORDS="amd64 ~arm64 -riscv"
 CPU_FLAGS="cpu_flags_x86_avx"
 IUSE="debug kerberos mongosh ssl +tools ${CPU_FLAGS}"
 
@@ -82,6 +82,7 @@ PATCHES=(
 	"${WORKDIR}/mongodb-5.0.30-patches/${PN}-5.0.30-gcc-15.patch"
 	"${WORKDIR}/mongodb-5.0.30-patches/${PN}-5.0.26-scons.patch"
 	"${WORKDIR}/mongodb-5.0.30-patches/${PN}-5.0.26-mozjs-remove-unused-constructor.patch"
+	"${FILESDIR}/mongodb-5.0.32-boost-system.patch"
 )
 
 python_check_deps() {

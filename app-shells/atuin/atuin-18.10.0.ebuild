@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,7 +17,7 @@ LICENSE="MIT"
 # - openssl for ring crate
 LICENSE+=" Apache-2.0 BSD Boost-1.0 ISC MIT MPL-2.0 Unicode-DFS-2016 openssl"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 ~riscv"
+KEYWORDS="amd64 ~arm64 ~riscv"
 IUSE="+client +daemon server system-sqlite test +sync"
 RESTRICT="!test? ( test )"
 REQUIRED_USE="
@@ -114,7 +114,7 @@ src_install() {
 	dobin "${ATUIN_BIN}"
 
 	if use server; then
-		systemd_dounit "${FILESDIR}/atuin.service"
+		systemd_newunit "${FILESDIR}/atuin_old.service" "atuin.service"
 	fi
 
 	dodoc -r "${DOCS[@]}"

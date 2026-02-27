@@ -16,7 +16,7 @@ S="${WORKDIR}/${MY_P}"
 
 LICENSE="BSD GPL-3-with-openssl-exception LGPL-2+"
 SLOT="0"
-KEYWORDS="~amd64 ~loong"
+KEYWORDS="amd64 ~loong"
 IUSE="dbus enchant +fonts +libdispatch screencast wayland webkit +X"
 
 CDEPEND="
@@ -83,6 +83,7 @@ PATCHES=(
 	"${FILESDIR}"/tdesktop-5.8.3-cstdint.patch
 	"${FILESDIR}"/tdesktop-5.14.3-system-cppgir.patch
 	"${FILESDIR}"/tdesktop-6.3.2-loosen-minizip.patch
+	"${FILESDIR}"/tdesktop-6.5.1-zlib-1.3.2.patch
 )
 
 pkg_pretend() {

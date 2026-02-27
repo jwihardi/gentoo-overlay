@@ -37,7 +37,7 @@ else
 	SRC_URI="
 		https://archive.mesa3d.org/${MY_P}.tar.xz
 	"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-solaris"
+	KEYWORDS="~alpha amd64 ~arm arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc x86 ~x64-solaris"
 fi
 
 # This should be {CARGO_CRATE_URIS//.crate/.tar.gz} to correspond to the wrap files,
@@ -184,6 +184,10 @@ x86? (
 	usr/lib/libgallium-*.so
 	usr/lib/libGLX_mesa.so.0.0.0
 )"
+
+PATCHES=(
+	"${FILESDIR}/${PN}-25.3.3-wsl.patch"
+)
 
 src_unpack() {
 	if [[ ${PV} == 9999 ]]; then
